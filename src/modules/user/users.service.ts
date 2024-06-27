@@ -4,12 +4,15 @@ import { User } from './models/user.model';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDTO, UpdateUserDTO } from './dto';
 import { WatchList } from '../watchlist/models/watchList.model';
+import { TokenService } from '../token/token.service';
+import { AuthUserResponse } from '../auth/response';
 //import { users } from 'src/moks';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User) private readonly userRepositiriy: typeof User,
+    private readonly tokenService: TokenService,
   ) {}
 
   async hashPassword(password: string): Promise<string> {
@@ -46,9 +49,9 @@ export class UsersService {
     }
   }
 
-  async publicUser(email: string): Promise<User> {
+  async publicUser(email: string): Promise<AuthUserResponse> {
     try {
-      return this.userRepositiriy.findOne({
+      const user = await this.userRepositiriy.findOne({
         where: { email },
         attributes: { exclude: ['password'] },
         include: {
@@ -56,6 +59,8 @@ export class UsersService {
           required: false,
         },
       });
+      const token = await this.tokenService.genereateJwtToken(user);
+      return { user, token };
     } catch (e) {
       throw new Error(e);
     }
