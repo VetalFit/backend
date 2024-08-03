@@ -21,7 +21,9 @@ export class AuthService {
     }
   }
 
-  async loginUser(dto: UserLoginDTO): Promise<AuthUserResponse> {
+  async loginUser(
+    dto: UserLoginDTO,
+  ): Promise<AuthUserResponse | BadRequestException> {
     try {
       const existUser = await this.userService.finUserByEmail(dto.email);
       if (!existUser) throw new BadRequestException(AppError.USER_NOT_EXIST);
@@ -29,7 +31,8 @@ export class AuthService {
         dto.password,
         existUser.password,
       );
-      if (!validatePassword) throw new BadRequestException(AppError.WRONG_DATA);
+      if (!validatePassword)
+        return new BadRequestException(AppError.WRONG_DATA);
       return this.userService.publicUser(dto.email);
     } catch (e) {
       throw new Error(e);
